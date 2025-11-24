@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Send } from 'lucide-react';
+import { FileText, Send, Sparkles } from 'lucide-react';
 
 interface ConflictInputProps {
   onAnalyze: (text: string) => void;
@@ -23,59 +23,70 @@ export default function ConflictInput({ onAnalyze, isAnalyzing }: ConflictInputP
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="relative">
+        <div className="absolute -top-2 left-4 bg-gradient-to-r from-neutral-900 to-neutral-700 text-white text-xs font-medium px-3 py-1 rounded-full z-10">
+          Conflict Description
+        </div>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Describe the conflict, paste a conversation, or explain what happened..."
-          className="w-full h-48 p-4 border-2 border-gray-200 rounded-xl focus:border-gray-900 focus:outline-none resize-none"
+          placeholder="Describe what happened in detail. Include exact words, tone, and how you felt..."
+          className="w-full h-56 p-6 bg-white/50 backdrop-blur-sm border-2 border-neutral-200/50 rounded-3xl focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 resize-none smooth-transition text-base leading-relaxed placeholder:text-neutral-400"
         />
-        <div className="absolute bottom-3 right-3 text-sm text-gray-400">
-          {text.length} characters
+        <div className="absolute bottom-4 right-5 flex items-center gap-3">
+          <div className={`text-sm font-medium ${
+            text.length >= 20 ? 'text-blue-600' : 'text-neutral-400'
+          }`}>
+            {text.length} / 20+
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-500">
-          Minimum 20 characters needed
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div className="text-sm text-neutral-600 flex items-center gap-2">
+          <Sparkles className="w-4 h-4" />
+          Share as much detail as possible for better insights
         </div>
         <button
           onClick={handleSubmit}
           disabled={text.trim().length < 20 || isAnalyzing}
           className={`
-            px-6 py-3 rounded-lg font-medium flex items-center gap-2
+            px-8 py-4 rounded-2xl font-semibold flex items-center justify-center gap-3 smooth-transition
             ${text.trim().length >= 20 && !isAnalyzing
-              ? 'bg-gray-900 text-white hover:bg-gray-800'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:scale-105 active:scale-95'
+              : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
             }
           `}
         >
           {isAnalyzing ? (
             <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Analyzing...
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span>Analyzing Conflict</span>
             </>
           ) : (
             <>
-              <Send className="w-4 h-4" />
-              Analyze Conflict
+              <Send className="w-5 h-5" />
+              <span>Start Analysis</span>
             </>
           )}
         </button>
       </div>
 
-      <div className="space-y-2">
-        <div className="text-sm font-medium text-gray-700">Examples:</div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+      <div className="space-y-3">
+        <div className="text-sm font-semibold text-neutral-700 flex items-center gap-2">
+          <FileText className="w-4 h-4" />
+          Quick Start Examples
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {examples.map((example, idx) => (
             <button
               key={idx}
               onClick={() => setText(example)}
-              className="text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm text-gray-600 transition-colors"
+              className="text-left p-4 bg-gradient-to-br from-neutral-50 to-neutral-100 hover:from-white hover:to-neutral-50 border border-neutral-200/50 rounded-2xl text-sm text-neutral-700 smooth-transition hover:shadow-lg hover:scale-[1.02] active:scale-95"
             >
-              <FileText className="w-3 h-3 inline mr-2" />
-              {example.substring(0, 60)}...
+              <div className="font-medium mb-1 text-neutral-900">Example {idx + 1}</div>
+              <div className="text-neutral-600 text-xs line-clamp-2">{example}</div>
             </button>
           ))}
         </div>
