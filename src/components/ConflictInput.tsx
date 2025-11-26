@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { FileText, Send, Sparkles } from 'lucide-react';
+import { FileText, Send, Sparkles, Keyboard, Mic } from 'lucide-react';
+import VoiceRecorder from './VoiceRecorder';
 
 interface ConflictInputProps {
   onAnalyze: (text: string) => void;
@@ -8,6 +9,11 @@ interface ConflictInputProps {
 
 export default function ConflictInput({ onAnalyze, isAnalyzing }: ConflictInputProps) {
   const [text, setText] = useState('');
+  const [inputMode, setInputMode] = useState<'text' | 'voice'>('text');
+
+  const handleVoiceTranscript = (transcript: string) => {
+    setText(prev => (prev ? prev + ' ' + transcript : transcript));
+  };
 
   const handleSubmit = () => {
     if (text.trim().length > 20) {
@@ -24,6 +30,38 @@ export default function ConflictInput({ onAnalyze, isAnalyzing }: ConflictInputP
 
   return (
     <div className="space-y-6">
+      <div className="flex gap-3 mb-4">
+        <button
+          onClick={() => setInputMode('text')}
+          disabled={isAnalyzing}
+          className={`flex-1 px-6 py-3 rounded-2xl font-semibold smooth-transition flex items-center justify-center gap-2 ${
+            inputMode === 'text'
+              ? 'bg-gradient-to-br from-blue-600 to-cyan-600 text-white shadow-lg'
+              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+          }`}
+        >
+          <Keyboard className="w-5 h-5" />
+          <span>Type</span>
+        </button>
+
+        <button
+          onClick={() => setInputMode('voice')}
+          disabled={isAnalyzing}
+          className={`flex-1 px-6 py-3 rounded-2xl font-semibold smooth-transition flex items-center justify-center gap-2 ${
+            inputMode === 'voice'
+              ? 'bg-gradient-to-br from-blue-600 to-cyan-600 text-white shadow-lg'
+              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+          }`}
+        >
+          <Mic className="w-5 h-5" />
+          <span>Speak</span>
+        </button>
+      </div>
+
+      {inputMode === 'voice' && (
+        <VoiceRecorder onTranscript={handleVoiceTranscript} disabled={isAnalyzing} />
+      )}
+
       <div className="relative">
         <div className="absolute -top-2 left-4 bg-gradient-to-r from-neutral-900 to-neutral-700 text-white text-xs font-medium px-3 py-1 rounded-full z-10">
           Conflict Description

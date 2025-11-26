@@ -8,6 +8,13 @@ HumanOS Debugger is a premium relationship conflict analysis platform that trans
 
 ## Features
 
+### Voice Input (NEW!)
+- **30+ Languages Supported**: Speak in your native language
+- **Real-time Transcription**: See your words appear as you speak
+- **Visual Feedback**: Recording indicator and volume meter
+- **Easy Toggle**: Switch between typing and speaking
+- **Supported Languages**: English (US/UK), Spanish, French, German, Italian, Portuguese, Russian, Chinese, Japanese, Korean, Arabic, Hindi, Turkish, Polish, Dutch, Swedish, Danish, Finnish, Norwegian, Czech, Thai, Vietnamese, Indonesian, Ukrainian, Romanian, Greek, and more
+
 ### Core Modules
 
 **1. Relationship Conflict Debugger**
