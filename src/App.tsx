@@ -1,18 +1,39 @@
 import { useState } from 'react';
-import { Activity } from 'lucide-react';
+import { Activity, Layers } from 'lucide-react';
 import RelationshipSelector from './components/RelationshipSelector';
 import ConflictInput from './components/ConflictInput';
 import EmotionalDebugMap from './components/EmotionalDebugMap';
 import CommunicationAnalysis from './components/CommunicationAnalysis';
-import CrisisSimulator from './components/CrisisSimulator';
 import RepairPlaybook from './components/RepairPlaybook';
+import EmotionalHeatmap from './components/EmotionalHeatmap';
+import EmotionalDiff from './components/EmotionalDiff';
+import PerspectiveSwap from './components/PerspectiveSwap';
+import CompatibilityMatrix from './components/CompatibilityMatrix';
+import CrisisSimulatorV2 from './components/CrisisSimulatorV2';
+import DynamicRepairPlaybook from './components/DynamicRepairPlaybook';
+import ConflictArchetype from './components/ConflictArchetype';
+import MicroEmotionMap from './components/MicroEmotionMap';
+import AttachmentAnalysis from './components/AttachmentAnalysis';
+import RootCauseTree from './components/RootCauseTree';
 import { analyzeConflict } from './lib/analysisEngine';
+import {
+  getEmotionalTimeline,
+  getEmotionalDiff,
+  getPerspectiveSwap,
+  getCompatibilityMatrix,
+  classifyConflict,
+  extractMicroEmotions,
+  detectAttachmentStyles,
+  generateRootCauseTree
+} from './lib/aiEngine';
 
 function App() {
   const [relationshipType, setRelationshipType] = useState<'friendship' | 'co-founder' | 'romantic' | 'family' | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [conflictText, setConflictText] = useState('');
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeConflict> | null>(null);
+  const [advancedData, setAdvancedData] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'core' | 'advanced'>('core');
 
   const handleAnalyze = async (text: string) => {
     if (!relationshipType) return;
@@ -22,15 +43,41 @@ function App() {
 
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    const result = analyzeConflict(text, relationshipType);
-    setAnalysis(result);
+    const coreResult = analyzeConflict(text, relationshipType);
+    setAnalysis(coreResult);
+
+    const [timeline, diff, youToThem, themToYou, compatibility, archetype, microEmotions, attachment, rootCause] = await Promise.all([
+      getEmotionalTimeline(text),
+      getEmotionalDiff(text),
+      getPerspectiveSwap(text, 'youToThem'),
+      getPerspectiveSwap(text, 'themToYou'),
+      getCompatibilityMatrix(text),
+      classifyConflict(text),
+      extractMicroEmotions(text),
+      detectAttachmentStyles(text),
+      generateRootCauseTree(text)
+    ]);
+
+    setAdvancedData({
+      timeline,
+      diff,
+      perspectives: { youToThem, themToYou },
+      compatibility,
+      archetype,
+      microEmotions,
+      attachment,
+      rootCause
+    });
+
     setIsAnalyzing(false);
   };
 
   const handleReset = () => {
     setRelationshipType(null);
     setAnalysis(null);
+    setAdvancedData(null);
     setConflictText('');
+    setActiveTab('core');
   };
 
   return (
@@ -93,27 +140,80 @@ function App() {
               </button>
             </div>
 
-            <div className="grid lg:grid-cols-2 gap-8">
-              <div className="space-y-8">
-                <EmotionalDebugMap
-                  emotionalTone={analysis.emotionalTone}
-                  unmetNeeds={analysis.unmetNeeds}
-                  escalationChain={analysis.escalationChain}
-                  misunderstandingRoot={analysis.misunderstandingRoot}
-                />
-              </div>
-
-              <div className="space-y-8">
-                <CommunicationAnalysis
-                  dialects={analysis.communicationDialects}
-                  mismatches={analysis.dialectMismatch}
-                />
-
-                <CrisisSimulator conflictText={conflictText} />
-              </div>
+            <div className="glass-effect rounded-[2.5rem] p-4 flex gap-3">
+              <button
+                onClick={() => setActiveTab('core')}
+                className={`flex-1 px-6 py-4 rounded-2xl font-semibold smooth-transition flex items-center justify-center gap-2 ${
+                  activeTab === 'core'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
+                    : 'text-neutral-700 hover:bg-neutral-100'
+                }`}
+              >
+                <Activity className="w-5 h-5" />
+                Core Analysis
+              </button>
+              <button
+                onClick={() => setActiveTab('advanced')}
+                className={`flex-1 px-6 py-4 rounded-2xl font-semibold smooth-transition flex items-center justify-center gap-2 ${
+                  activeTab === 'advanced'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
+                    : 'text-neutral-700 hover:bg-neutral-100'
+                }`}
+              >
+                <Layers className="w-5 h-5" />
+                Advanced Features
+              </button>
             </div>
 
-            <RepairPlaybook steps={analysis.repairPlaybook} />
+            {activeTab === 'core' ? (
+              <>
+                <div className="grid lg:grid-cols-2 gap-8">
+                  <div className="space-y-8">
+                    <EmotionalDebugMap
+                      emotionalTone={analysis.emotionalTone}
+                      unmetNeeds={analysis.unmetNeeds}
+                      escalationChain={analysis.escalationChain}
+                      misunderstandingRoot={analysis.misunderstandingRoot}
+                    />
+                  </div>
+
+                  <div className="space-y-8">
+                    <CommunicationAnalysis
+                      dialects={analysis.communicationDialects}
+                      mismatches={analysis.dialectMismatch}
+                    />
+                  </div>
+                </div>
+
+                <RepairPlaybook steps={analysis.repairPlaybook} />
+              </>
+            ) : (
+              advancedData && (
+                <>
+                  <div className="grid lg:grid-cols-2 gap-8">
+                    <EmotionalHeatmap timeline={advancedData.timeline} />
+                    <EmotionalDiff diff={advancedData.diff} />
+                  </div>
+
+                  <PerspectiveSwap perspectives={advancedData.perspectives} />
+
+                  <CompatibilityMatrix items={advancedData.compatibility} />
+
+                  <div className="grid lg:grid-cols-2 gap-8">
+                    <ConflictArchetype archetype={advancedData.archetype} />
+                    <MicroEmotionMap emotions={advancedData.microEmotions} />
+                  </div>
+
+                  <AttachmentAnalysis profile={advancedData.attachment} />
+
+                  <RootCauseTree tree={advancedData.rootCause} />
+
+                  <CrisisSimulatorV2 conflictText={conflictText} />
+
+                  <DynamicRepairPlaybook conflictText={conflictText} />
+                </>
+              )
+            )}
           </div>
         )}
       </div>
