@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Activity, Layers } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Activity, Layers, Database, Users as UsersIcon } from 'lucide-react';
 import RelationshipSelector from './components/RelationshipSelector';
 import ConflictInput from './components/ConflictInput';
 import EmotionalDebugMap from './components/EmotionalDebugMap';
@@ -15,7 +15,10 @@ import ConflictArchetype from './components/ConflictArchetype';
 import MicroEmotionMap from './components/MicroEmotionMap';
 import AttachmentAnalysis from './components/AttachmentAnalysis';
 import RootCauseTree from './components/RootCauseTree';
+import RelationshipDashboard from './components/RelationshipDashboard';
+import SharedConflictPortal from './components/SharedConflictPortal';
 import { analyzeConflict } from './lib/analysisEngine';
+import { getRelationships, createRelationship, saveConflict, detectAndSavePattern, Relationship } from './lib/database';
 import {
   getEmotionalTimeline,
   getEmotionalDiff,
@@ -28,12 +31,36 @@ import {
 } from './lib/aiEngine';
 
 function App() {
+  const [view, setView] = useState<'home' | 'dashboard' | 'shared' | 'analysis'>('home');
+  const [relationships, setRelationships] = useState<Relationship[]>([]);
+  const [selectedRelationship, setSelectedRelationship] = useState<Relationship | null>(null);
   const [relationshipType, setRelationshipType] = useState<'friendship' | 'co-founder' | 'romantic' | 'family' | null>(null);
+  const [partnerName, setPartnerName] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [conflictText, setConflictText] = useState('');
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeConflict> | null>(null);
   const [advancedData, setAdvancedData] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'core' | 'advanced'>('core');
+  const [activeTab, setActiveTab] = useState<'core' | 'advanced' | 'history'>('core');
+
+  useEffect(() => {
+    loadRelationships();
+  }, []);
+
+  const loadRelationships = async () => {
+    const data = await getRelationships();
+    setRelationships(data);
+  };
+
+  const handleCreateRelationship = async () => {
+    if (!relationshipType || !partnerName) return;
+
+    const relationship = await createRelationship(relationshipType, partnerName);
+    if (relationship) {
+      setSelectedRelationship(relationship);
+      await loadRelationships();
+      setView('dashboard');
+    }
+  };
 
   const handleAnalyze = async (text: string) => {
     if (!relationshipType) return;
@@ -45,6 +72,11 @@ function App() {
 
     const coreResult = analyzeConflict(text, relationshipType);
     setAnalysis(coreResult);
+
+    if (selectedRelationship) {
+      await saveConflict(selectedRelationship.id, text, coreResult, 'medium');
+      await detectAndSavePattern(selectedRelationship.id, coreResult.misunderstandingRoot, ['communication mismatch']);
+    }
 
     const [timeline, diff, youToThem, themToYou, compatibility, archetype, microEmotions, attachment, rootCause] = await Promise.all([
       getEmotionalTimeline(text),
@@ -78,6 +110,8 @@ function App() {
     setAdvancedData(null);
     setConflictText('');
     setActiveTab('core');
+    setPartnerName('');
+    setView('home');
   };
 
   return (
@@ -97,9 +131,51 @@ function App() {
           <p className="text-lg md:text-xl text-neutral-600 max-w-3xl mx-auto leading-relaxed font-medium">
             The first AI engine that debugs human relationships like code — analyzing conflicts, translating emotional languages, and simulating outcomes before things break.
           </p>
+
+          {view === 'home' && (
+            <div className="mt-12 grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              <button
+                onClick={() => setView('analysis')}
+                className="glass-effect rounded-2xl p-6 hover:shadow-xl smooth-transition hover:scale-105 active:scale-95 text-left"
+              >
+                <Activity className="w-8 h-8 text-blue-600 mb-3" />
+                <div className="font-bold text-neutral-900 mb-2">Quick Analysis</div>
+                <div className="text-sm text-neutral-600">Analyze a conflict right now</div>
+              </button>
+
+              <button
+                onClick={() => setView('dashboard')}
+                className="glass-effect rounded-2xl p-6 hover:shadow-xl smooth-transition hover:scale-105 active:scale-95 text-left"
+              >
+                <Database className="w-8 h-8 text-green-600 mb-3" />
+                <div className="font-bold text-neutral-900 mb-2">Track History</div>
+                <div className="text-sm text-neutral-600">See patterns over time</div>
+              </button>
+
+              <button
+                onClick={() => setView('shared')}
+                className="glass-effect rounded-2xl p-6 hover:shadow-xl smooth-transition hover:scale-105 active:scale-95 text-left"
+              >
+                <UsersIcon className="w-8 h-8 text-purple-600 mb-3" />
+                <div className="font-bold text-neutral-900 mb-2">Both Sides</div>
+                <div className="text-sm text-neutral-600">2-person perspective analysis</div>
+              </button>
+            </div>
+          )}
         </div>
 
-        {!analysis ? (
+        {view === 'dashboard' && selectedRelationship && (
+          <RelationshipDashboard relationship={selectedRelationship} />
+        )}
+
+        {view === 'shared' && selectedRelationship && (
+          <SharedConflictPortal
+            relationshipId={selectedRelationship.id}
+            onComplete={() => setView('analysis')}
+          />
+        )}
+
+        {view === 'analysis' && !analysis ? (
           <div className="max-w-5xl mx-auto space-y-8">
             <div className="glass-effect rounded-[2.5rem] p-10 md:p-12 animate-slideUp">
               <h2 className="text-3xl font-bold text-neutral-900 mb-8 flex items-center gap-3">
