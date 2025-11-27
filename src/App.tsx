@@ -164,6 +164,47 @@ function App() {
           )}
         </div>
 
+        {(view === 'dashboard' || view === 'shared') && !selectedRelationship && (
+          <div className="max-w-2xl mx-auto">
+            <div className="glass-effect rounded-3xl p-10 space-y-6">
+              <h2 className="text-2xl font-bold text-neutral-900">Create a Relationship Profile</h2>
+              <p className="text-neutral-600">To track patterns and history, first create a relationship profile.</p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-bold text-neutral-700 mb-3 block">Relationship Type</label>
+                  <RelationshipSelector selected={relationshipType} onSelect={setRelationshipType} />
+                </div>
+
+                {relationshipType && (
+                  <div>
+                    <label className="text-sm font-bold text-neutral-700 mb-3 block">Partner Name</label>
+                    <input
+                      type="text"
+                      value={partnerName}
+                      onChange={(e) => setPartnerName(e.target.value)}
+                      placeholder="Enter their name or nickname"
+                      className="w-full px-5 py-4 bg-white/50 backdrop-blur-sm border-2 border-neutral-200/50 rounded-2xl focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10"
+                    />
+                  </div>
+                )}
+
+                <button
+                  onClick={handleCreateRelationship}
+                  disabled={!relationshipType || !partnerName}
+                  className={`w-full py-4 rounded-2xl font-semibold smooth-transition ${
+                    relationshipType && partnerName
+                      ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95'
+                      : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                  }`}
+                >
+                  Create Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {view === 'dashboard' && selectedRelationship && (
           <RelationshipDashboard relationship={selectedRelationship} />
         )}
@@ -175,7 +216,7 @@ function App() {
           />
         )}
 
-        {view === 'analysis' && !analysis ? (
+        {view === 'analysis' && !analysis && (
           <div className="max-w-5xl mx-auto space-y-8">
             <div className="glass-effect rounded-[2.5rem] p-10 md:p-12 animate-slideUp">
               <h2 className="text-3xl font-bold text-neutral-900 mb-8 flex items-center gap-3">
@@ -201,7 +242,9 @@ function App() {
               </div>
             )}
           </div>
-        ) : (
+        )}
+
+        {view === 'analysis' && analysis && (
           <div className="space-y-8 animate-fadeIn">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 glass-effect rounded-[2.5rem] p-8">
               <div>
